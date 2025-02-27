@@ -1,0 +1,126 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply bg-gradient-to-br from-[#032d28] via-[#28635c] to-[#032d28];
+}
+
+.linkBtn{
+    @apply flex items-center space-x-4 p-2 rounded-md transition-colors hover:bg-[#cececeb4] hover:text-[#000000];
+}
+
+.btn {
+    @apply py-1 px-5 rounded-md mb-5 bg-[#959595e6] inline-block text-black hover:text-white hover:bg-[#2d2c2ce6];
+}
+
+.heading {
+    @apply font-bold text-white text-4xl capitalize text-center mb-8;
+    text-shadow: 2px 2px 5px black;
+}
+
+
+.heading-inner {
+    @apply font-bold text-[#000000] text-3xl capitalize text-center text-shadow mb-5;
+    text-shadow: 1px 1px 5px white;
+}
+
+p,
+li {
+   @apply leading-[1.8];
+}
+
+.loading-spinner {
+   @apply flex flex-col items-center justify-center h-screen;
+}
+
+.loading-spinner article {
+   @apply w-20 h-20 border-4 border-white opacity-50 border-t-[#000000] rounded-full animate-spin;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner p {
+    @apply text-white opacity-75 mt-2 text-center;
+}
+
+.max-width {
+   @apply px-[1.25rem] max-w-[48rem] mx-auto lg:max-w-[72rem] xl:px-0;
+}
+
+.pages-overlay{
+    padding-top: 100px;
+    padding-bottom: 50px;
+}
+
+.beforeScreen{
+    background: url("assets/Rocket-1.jpeg") no-repeat center/cover;
+    height: calc(100vh);
+}
+
+.showcase {
+    background: url("assets/Rocket-2.jpeg") no-repeat center/cover;
+    height: calc(100vh);
+    padding:0;
+}
+
+.overlay {
+    @apply flex flex-col items-center justify-center h-screen;
+}
+
+.navbar {
+    @apply fixed mt-[10px] left-[1000vw] right-5 bg-[#333] text-white z-[-999]  transition-all duration-300 ease-in-out flex gap-4;
+}
+
+.navbar.open {
+    @apply top-[6rem] left-[1.25rem] bg-[#0f0f0fee] z-10;
+}
+
+.navbar ul li {
+    @apply mb-4 font-bold uppercase;
+}
+
+.articles {
+   @apply bg-[#0f0f0f];
+}
+
+@media (min-width: 400px) {
+    .showcase,
+     .overlay {
+        height: calc(130vh);
+    }
+}
+
+@media (min-width: 768px) {
+    .showcase ,
+    .overlay {
+        height: calc(110vh);
+    }
+}
+
+@media (min-width: 1024px) {
+    .navbar {
+        @apply relative top-0 left-0 right-0 bg-transparent z-auto p-0;
+    }
+
+    .navbar ul {
+        @apply flex items-center justify-center;
+    }
+
+    .navbar ul li {
+        @apply mr-4 text-[14px] font-normal capitalize tracking-normal;
+    }
+}
