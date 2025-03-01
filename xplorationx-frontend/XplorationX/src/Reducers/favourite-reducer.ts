@@ -60,14 +60,7 @@ const favouriteSlice = createSlice({
 
         builder
             .addCase(getFavourites.fulfilled, (state, action) => {
-
-                const currentUserId = Number(localStorage.getItem('currentUserId'));
-
-                const filteredFavourites = action.payload.filter(
-                    (favourite: Favourite) => favourite.UserId === currentUserId
-                );
-
-                return filteredFavourites;
+                return action.payload;
             })
 
             .addCase(getFavourites.pending, (state, action) => {

@@ -72,13 +72,7 @@ const noteSlice = createSlice({
 
         builder
             .addCase(getNotes.fulfilled, (state, action) => {
-                const currentUserId = Number(localStorage.getItem('currentUserId'));
-
-                const filteredNotes = action.payload.filter(
-                    (note: Notes) => note.UserId === currentUserId
-                );
-
-                return filteredNotes;
+                return action.payload
             })
             .addCase(getNotes.pending, (state, action) => {
                 console.log("Get Notes pending", action.payload);

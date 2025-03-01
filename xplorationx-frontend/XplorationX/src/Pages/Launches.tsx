@@ -1,33 +1,29 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../store/store.ts";
+import { AppDispatch, RootState } from "../store/store";
 import { useEffect, useState } from "react";
-import { getlaunches } from "../Reducers/launch-reducer.ts";
-import LoadingState from "./Loading.tsx";
+import { getlaunches } from "../Reducers/launch-reducer";
+import LoadingState from "./Loading";
 import { Link } from "react-router-dom";
-import * as React from "react";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/16/solid";
 import { PencilSquareIcon as PencilSquareOutline } from "@heroicons/react/24/outline";
-import {deletefavourite, getFavourites, saveFavourite} from "../Reducers/favourite-reducer.ts";
-import {getNotes} from "../Reducers/note-reducer.ts";
-
+import { deletefavourite, getFavourites, saveFavourite } from "../Reducers/favourite-reducer";
+import {deleteNotes, getNotes, saveNote, updateNote} from "../Reducers/note-reducer";
+import Notes from "../Models/Notes.ts";
 
 const Launches = () => {
     const dispatch = useDispatch();
     const launches = useSelector((state: RootState) => state.launch.allLaunches);
     const favouritesList = useSelector((state: RootState) => state.favourite);
-    const filteredNotes = useSelector((state:RootState)=>state.note)
+    const NotesList = useSelector((state: RootState) => state.note);
     const currentUserId = localStorage.getItem('currentUserId');
 
-    console.log("My Favourites Count: ", favouritesList.length);
-
-    const [notes, setNotes] = useState<Record<string, string>>({});
+    const [notes, setNotes] = useState<Record<string, boolean>>({});
     const [showFavorites, setShowFavorites] = useState<boolean>(false);
     const [showNotedItems, setShowNotedItems] = useState<boolean>(false);
     const [noteModalData, setNoteModalData] = useState<{ id: string; note: string } | null>(null);
     const [favourites, setFavourites] = useState<Record<string, boolean>>({});
-
 
     useEffect(() => {
         dispatch(getFavourites());
@@ -45,12 +41,21 @@ const Launches = () => {
         if (favouritesList.length > 0) {
             const updatedFavorites: Record<string, boolean> = {};
             favouritesList.forEach((favourite) => {
-                    updatedFavorites[favourite.FavTopic] = true;
+                updatedFavorites[favourite.FavTopic] = true;
             });
             setFavourites(updatedFavorites);
         }
     }, [favouritesList]);
 
+    useEffect(() => {
+        if (NotesList.length > 0) {
+            const updatedNotes: Record<string, boolean> = {};
+            NotesList.forEach((note) => {
+                updatedNotes[note.Topic] = true;
+            });
+            setNotes(updatedNotes);
+        }
+    }, [NotesList]);
 
     const handleFavoriteToggle = async (id: string) => {
         const existingFavorite = favouritesList.find(
@@ -67,6 +72,7 @@ const Launches = () => {
                     delete updatedFavorites[id];
                     return updatedFavorites;
                 });
+                dispatch(getFavourites()); // Refresh the favourites list
             } else {
                 const newFavorite = {
                     FavTopic: id,
@@ -80,50 +86,136 @@ const Launches = () => {
                     ...prevFavorites,
                     [id]: true,
                 }));
+                dispatch(getFavourites()); // Refresh the favourites list
             }
         } catch (error) {
             console.error('Failed to add or remove from favorites:', error);
         }
     };
 
-    const handleNotes = (id: string) => {
-        if (notes[id]) {
-            setNoteModalData({ id, note: notes[id] });
+    const handleNotes = async (id: string) => {
+
+        const existingNote = NotesList.find(
+            (note) => note.Topic === id
+        );
+
+        if (existingNote!= null) {
+            setNoteModalData({ id, note: existingNote.Description});
         } else {
             setNoteModalData({ id, note: "" });
         }
     };
 
-    const handleNoteSaveOrUpdate = () => {
-        if (noteModalData) {
-            const { id, note } = noteModalData;
+    const handleNoteUpdate = async (id: string) => {
+        const {note} = noteModalData;
+        const existingNote = NotesList.find(
+            (note) => note.Topic === id
+        );
+        if (existingNote != null) {
+            const updNote ={
+                NoteId: existingNote.NoteId,
+                UserId: Number(existingNote.UserId),
+                Topic: existingNote.Topic,
+                Description: note
+            }
+            await dispatch(updateNote(updNote)).unwrap();
+            console.log(`Updated launch with ID ${id} to Notes.`);
+
             setNotes((prevNotes) => ({
                 ...prevNotes,
-                [id]: note,
+                [id]: true,
             }));
-            setNoteModalData(null);
+            dispatch(getNotes());
+        }else{
+            console.log("Note Not Found")
         }
-    };
+    }
+
+    const handleNoteSave = async(id: string) => {
+        const {note} = noteModalData;
+        const existingNote = NotesList.find(
+            (note) => note.Topic === id
+        );
+        if (existingNote != null) {
+            console.log("Note Already Added")
+        }else{
+            const newNote ={
+                UserId: Number(currentUserId),
+                Topic: id,
+                Description: note
+            }
+            await dispatch(saveNote(newNote)).unwrap();
+            console.log(`Saved launch with ID ${id} to Notes.`);
+
+            setNotes((prevNotes) => ({
+                ...prevNotes,
+                [id]: true,
+            }));
+            dispatch(getNotes());
+        }
+    }
 
     const handleNoteCancel = () => {
         setNoteModalData(null);
     };
 
-    const handleNoteDelete = () => {
-        if (noteModalData) {
-            const { id } = noteModalData;
+    const handleNoteDelete = async () => {
+        const {id,note} = noteModalData;
+        const existingNote = NotesList.find(
+            (note) => note.Topic === id
+        );
+        if (existingNote != null) {
+            await dispatch(deleteNotes(existingNote.NoteId)).unwrap();
+            console.log(`Removed launch with ID ${id} from Notes.`);
+
             setNotes((prevNotes) => {
                 const newNotes = { ...prevNotes };
                 delete newNotes[id];
                 return newNotes;
             });
             setNoteModalData(null);
+            dispatch(getNotes())
         }
     };
 
+    const filterFavs = () => {
+        if (Array.isArray(favouritesList)) {
+            const filteredFav = favouritesList.filter(
+                (favourite) => favourite.UserId === Number(currentUserId)
+            );
+            return filteredFav;
+        } else {
+            console.warn("favouritesList is not an array:", favouritesList);
+            return [];
+        }
+    };
+
+    const filterNotes = () => {
+        if (Array.isArray(NotesList)) {
+            const filteredNotes = NotesList.filter(
+                (note) => note.UserId === Number(currentUserId)
+            );
+            return filteredNotes;
+        } else {
+            console.warn("NoteList is not an array:", NotesList);
+            return [];
+        }
+    };
+
+
+    const isNoted = (id: string) => {
+        const filteredNote = filterNotes();
+        return filteredNote.some((note) => note.Topic === id);
+    };
+
+    const isFavorite = (id: string) => {
+        const filteredFav = filterFavs();
+        return filteredFav.some((favourite) => favourite.FavTopic === id);
+    };
+
     const filteredLaunches = launches.filter(({ id }) => {
-        if (showFavorites && !favourites[id]) return false;
-        if (showNotedItems && !notes[id]) return false;
+        if (showFavorites && !isFavorite(id)) return false;
+        if (showNotedItems && !isNoted(id)) return false;
         return true;
     });
 
@@ -174,7 +266,7 @@ const Launches = () => {
                                             onClick={() => handleFavoriteToggle(id)}
                                             className="flex items-center justify-center p-2 rounded-full hover:bg-gray-200"
                                         >
-                                            {favourites[id] ? (
+                                            {isFavorite(id) ? (
                                                 <HeartIcon className="w-6 h-6 text-red-500" />
                                             ) : (
                                                 <HeartIconOutline className="w-6 h-6 text-gray-500" />
@@ -196,7 +288,6 @@ const Launches = () => {
                             ))}
                         </div>
 
-
                         {noteModalData && (
                             <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-50">
                                 <div className="bg-white p-6 rounded-lg w-96">
@@ -205,10 +296,12 @@ const Launches = () => {
                                         className="w-full p-2 border border-gray-300 rounded-lg"
                                         rows={4}
                                         value={noteModalData.note}
-                                        onChange={(e) => setNoteModalData({
-                                            id: "",
-                                            ...noteModalData,
-                                            note: e.target.value })}
+                                        onChange={(e) =>
+                                            setNoteModalData({
+                                                id: noteModalData.id,
+                                                note: e.target.value,
+                                            })
+                                        }
                                     ></textarea>
                                     <div className="flex justify-end mt-4 gap-4">
                                         <button
@@ -224,20 +317,19 @@ const Launches = () => {
                                             >
                                                 Delete
                                             </button>
+                                            ,
+                                            <button
+                                                onClick={handleNoteUpdate}
+                                                className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
+                                            >
+                                                Update
+                                            </button>
                                         ) : (
                                             <button
-                                                onClick={handleNoteSaveOrUpdate}
+                                                onClick={handleNoteSave}
                                                 className="px-4 py-2 bg-green-500 text-white rounded-lg"
                                             >
                                                 Save
-                                            </button>
-                                        )}
-                                        {notes[noteModalData.id] && (
-                                            <button
-                                                onClick={handleNoteSaveOrUpdate}
-                                                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-                                            >
-                                                Update
                                             </button>
                                         )}
                                     </div>

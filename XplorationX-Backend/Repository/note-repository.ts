@@ -32,7 +32,11 @@ export async function getNoteById(NoteId: number) {
 export async function createNote(noteData: NoteCreateInput) {
     try {
         return await prisma.note.create({
-            data: noteData,
+            data: {
+                UserId:noteData.UserId,
+               Topic:noteData.Topic,
+                Description:noteData.Description,
+            },
         });
     } catch (err) {
         console.error("Error creating note:", err);

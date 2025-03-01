@@ -19,12 +19,12 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "http://localhost:5177");
+    res.header("Access-Control-Allow-Origin", "http://localhost:5173");
     res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, content-type");
 
     cors({
-        origin: 'http://localhost:5177',
+        origin: 'http://localhost:5173',
         methods: ['GET', 'POST','DELETE','PUT'],
         credentials: true,
     })(req, res, next);
