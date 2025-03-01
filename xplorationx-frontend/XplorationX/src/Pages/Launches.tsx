@@ -16,7 +16,7 @@ const Launches = () => {
     const dispatch = useDispatch();
     const launches = useSelector((state: RootState) => state.launch.allLaunches);
     const favouritesList = useSelector((state: RootState) => state.favourite);
-    const NotesList = useSelector((state: RootState) => state.note);
+    const NotesList = useSelector((state: RootState) => state.notes);
     const currentUserId = localStorage.getItem('currentUserId');
 
     const [notes, setNotes] = useState<Record<string, boolean>>({});
@@ -95,63 +95,75 @@ const Launches = () => {
 
     const handleNotes = async (id: string) => {
 
-        const existingNote = NotesList.find(
-            (note) => note.Topic === id
-        );
+        if(NotesList!=null) {
+            const existingNote = NotesList.find(
+                (note) => note.Topic === id
+            );
 
-        if (existingNote!= null) {
-            setNoteModalData({ id, note: existingNote.Description});
-        } else {
-            setNoteModalData({ id, note: "" });
+            if (existingNote != null) {
+                setNoteModalData({id, note: existingNote.Description});
+            } else {
+                setNoteModalData({id, note: ""});
+            }
+        }else{
+            console.log("No Notes In Your History");
         }
     };
 
-    const handleNoteUpdate = async (id: string) => {
-        const {note} = noteModalData;
-        const existingNote = NotesList.find(
-            (note) => note.Topic === id
-        );
-        if (existingNote != null) {
-            const updNote ={
-                NoteId: existingNote.NoteId,
-                UserId: Number(existingNote.UserId),
-                Topic: existingNote.Topic,
-                Description: note
+    const handleNoteUpdate = async () => {
+        if(noteModalData) {
+            const {id, note} = noteModalData;
+            const existingNote = NotesList.find(
+                (note) => note.Topic === id
+            );
+            if (existingNote != null) {
+                const updNote = {
+                    NoteId: existingNote.NoteId,
+                    UserId: Number(existingNote.UserId),
+                    Topic: existingNote.Topic,
+                    Description: note
+                }
+                await dispatch(updateNote(updNote)).unwrap();
+                console.log(`Updated launch with ID ${id} to Notes.`);
+                setNoteModalData(null)
+                setNotes((prevNotes) => ({
+                    ...prevNotes,
+                    [id]: true,
+                }));
+                dispatch(getNotes());
+            } else {
+                console.log("Note Not Found")
             }
-            await dispatch(updateNote(updNote)).unwrap();
-            console.log(`Updated launch with ID ${id} to Notes.`);
-
-            setNotes((prevNotes) => ({
-                ...prevNotes,
-                [id]: true,
-            }));
-            dispatch(getNotes());
         }else{
-            console.log("Note Not Found")
+            console.log("No Note Model Found");
         }
     }
 
-    const handleNoteSave = async(id: string) => {
-        const {note} = noteModalData;
-        const existingNote = NotesList.find(
-            (note) => note.Topic === id
-        );
-        if (existingNote != null) {
-            console.log("Note Already Added")
-        }else{
-            const newNote ={
-                UserId: Number(currentUserId),
-                Topic: id,
-                Description: note
+    const handleNoteSave = async() => {
+        const {id,note} = noteModalData;
+        if(NotesList!=null) {
+            const existingNote = NotesList.find(
+                (note) => note.Topic === id
+            );
+            if (existingNote != null) {
+                console.log("Note Already Added")
+            } else {
+                const newNote = {
+                    UserId: Number(currentUserId),
+                    Topic: id,
+                    Description: note
+                }
+                await dispatch(saveNote(newNote)).unwrap();
+                console.log(`Saved launch with ID ${id} to Notes.`);
+                setNoteModalData(null)
+                setNotes((prevNotes) => ({
+                    ...prevNotes,
+                    [id]: true,
+                }));
+                dispatch(getNotes());
             }
-            await dispatch(saveNote(newNote)).unwrap();
-            console.log(`Saved launch with ID ${id} to Notes.`);
-
-            setNotes((prevNotes) => ({
-                ...prevNotes,
-                [id]: true,
-            }));
-            dispatch(getNotes());
+        }else{
+            console.log("note List Empty")
         }
     }
 
@@ -161,20 +173,24 @@ const Launches = () => {
 
     const handleNoteDelete = async () => {
         const {id,note} = noteModalData;
-        const existingNote = NotesList.find(
-            (note) => note.Topic === id
-        );
-        if (existingNote != null) {
-            await dispatch(deleteNotes(existingNote.NoteId)).unwrap();
-            console.log(`Removed launch with ID ${id} from Notes.`);
+        if(NotesList!=null) {
+            const existingNote = NotesList.find(
+                (note) => note.Topic === id
+            );
+            if (existingNote != null) {
+                await dispatch(deleteNotes(existingNote.NoteId)).unwrap();
+                console.log(`Removed launch with ID ${id} from Notes.`);
 
-            setNotes((prevNotes) => {
-                const newNotes = { ...prevNotes };
-                delete newNotes[id];
-                return newNotes;
-            });
-            setNoteModalData(null);
-            dispatch(getNotes())
+                setNotes((prevNotes) => {
+                    const newNotes = {...prevNotes};
+                    delete newNotes[id];
+                    return newNotes;
+                });
+                setNoteModalData(null);
+                dispatch(getNotes())
+            }
+        }else{
+            console.log("Note Not Found");
         }
     };
 
@@ -277,7 +293,7 @@ const Launches = () => {
                                             onClick={() => handleNotes(id)}
                                             className="flex items-center justify-center p-2 rounded-full hover:bg-gray-200"
                                         >
-                                            {notes[id] ? (
+                                            {isNoted(id) ? (
                                                 <PencilSquareIcon className="w-6 h-6 text-white/90" />
                                             ) : (
                                                 <PencilSquareOutline className="w-6 h-6 text-gray-500" />
@@ -311,19 +327,20 @@ const Launches = () => {
                                             Cancel
                                         </button>
                                         {notes[noteModalData.id] ? (
+                                            <>
                                             <button
                                                 onClick={handleNoteDelete}
                                                 className="px-4 py-2 bg-red-500 text-white rounded-lg"
                                             >
                                                 Delete
                                             </button>
-                                            ,
                                             <button
                                                 onClick={handleNoteUpdate}
                                                 className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
                                             >
                                                 Update
                                             </button>
+                                            </>
                                         ) : (
                                             <button
                                                 onClick={handleNoteSave}

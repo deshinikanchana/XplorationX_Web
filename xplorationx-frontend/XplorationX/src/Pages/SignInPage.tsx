@@ -23,6 +23,7 @@ export default function SignInPage() {
 
             const currentUser = await dispatch(getUserByEmail(email)).unwrap();
             localStorage.setItem("currentUserId", currentUser.UserId);
+            localStorage.setItem("currentUserEmail",currentUser.Email);
 
             navigate('/home');
         } catch (error) {

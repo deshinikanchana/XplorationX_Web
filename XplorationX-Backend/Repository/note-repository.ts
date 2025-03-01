@@ -47,8 +47,12 @@ export async function createNote(noteData: NoteCreateInput) {
 export async function updateNote(NoteId: number, noteData: Partial<NoteCreateInput>) {
     try {
         const note = await prisma.note.update({
-            where: { NoteId },
-            data: noteData,
+            where: {NoteId},
+            data: {
+                UserId:Number(noteData.UserId),
+                Topic:noteData.Topic,
+                Description:noteData.Description,
+            },
         });
         return note;
     } catch (err) {
